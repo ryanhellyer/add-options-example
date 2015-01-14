@@ -5,7 +5,7 @@
 //
 //  - Ajaxifies an individual <input type="file">
 //  - Files are sandboxed. Doesn't matter how many, or where they are, on the page.
-//  - Allows for extra parameters to be included with the file
+//  - Allows for extra parameters to be inclonuded with the file
 //  - onStart callback can cancel the upload by returning false
 */
 

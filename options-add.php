@@ -23,15 +23,15 @@ class Example_Options_Page_With_Rows {
 	public function __construct() {
 
 		// Add to hooks
-		add_action( 'admin_init',    array( $this, 'register_settings' ) );
-		add_action( 'admin_menu',    array( $this, 'create_admin_page' ) );
-		add_action( 'admin_footer',  array( $this, 'scripts' ) );
+		add_action( 'admin_init',     array( $this, 'register_settings' ) );
+		add_action( 'admin_menu',     array( $this, 'create_admin_page' ) );
+		add_action( 'admin_footer',   array( $this, 'scripts' ) );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		add_action( 'plugins_loaded',        array( $this, 'ajax_file_upload' ) );
-		add_action( 'plugins_loaded',        array( $this, 'get_time' ) );
+		add_action( 'init',           array( $this, 'ajax_file_upload' ) );
+		add_action( 'init',           array( $this, 'get_time' ) );
 	}
 
 	public function ajax_file_upload() {
@@ -57,15 +57,34 @@ class Example_Options_Page_With_Rows {
 
 				}
 
+				// Upload file
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				$upload_overrides = array( 'test_form' => false);
-				$response = wp_handle_upload( $single[self::OPTION], $upload_overrides );
+				$image_file = wp_handle_upload( $single[self::OPTION], $upload_overrides );
+
+				// Insert attachment into WordPress
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+				require_once( ABSPATH . 'wp-admin/includes/media.php' );
+				$attachment = array(
+					'guid'           => $image_file['url'],
+					'post_mime_type' => $image_file['type'],
+					'post_title'     => $name['file'],
+					'post_content'   => '',
+					'post_status'    => 'inherit'
+				);
+				wp_insert_attachment( $attachment, $image_file['file'], 0 );
 
 			}
 
-echo $response['url'];
-//print_r( $response );
-//			echo 'pooper';
+	header('Content-Type: text/html');
+	$json = json_encode( $image_file );
+	$json = htmlspecialchars( json_encode( $json ), ENT_QUOTES, 'UTF-8' );
+
+
+update_option( 'bla', $json );
+echo $json;
+exit;
+			echo $image_file['url'];
 			exit;
 		}
 
@@ -74,6 +93,11 @@ echo $response['url'];
 	public function get_time() {
 		if ( isset( $_GET['get_time'] ) ) {
 			echo get_option( 'bla' );
+echo "\n\n\n";
+$json = get_option( 'bla' );
+$json = json_decode( $json );
+print_r( $json );
+
 			exit;
 		}
 	}
@@ -216,13 +240,8 @@ echo $response['url'];
 							<span class="read-more-text"><br />some text goes here</span>
 						</td>
 						<td>
-							<div style="border:1px dashed red;padding:10px;" class="the-image">
-								<input class="file-upload" type="file" name="' . esc_attr( self::OPTION ) . '[][file]" />
-<div class="box-with-content">...</div>
-
-								<span class="read-more-text"><br />' . __( 'Upload file', 'plugin-slug' ) . '</span>
-								<br />
-							</div>
+							<input class="file-upload" type="file" name="' . esc_attr( self::OPTION ) . '[][file]" />
+							<div class="box-with-content">...</div>
 
 						</td>
 					</tr>';
